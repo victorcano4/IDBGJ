@@ -8,17 +8,22 @@ public class RobotManager : MonoBehaviour
     private Rigidbody2D rb2d;
     public float Velocity;
     private Animator animator;
-    private bool canGetFood;
-    private bool serving;
-    private bool canCook;
+    private bool canGetOnions;
+    private bool canGetTomato;
+    private bool servingOnion;
+    private bool servingTomato;
+    private bool canCut;
     private bool blockMovement;
     private SpriteRenderer onion;
+    private SpriteRenderer tomato;
     public Sprite onion_cut;
+    public Sprite tomato_cut;
     void Start()
     {
         rb2d = gameObject.GetComponent<Rigidbody2D>();
         animator = gameObject.GetComponent<Animator>();
         onion = GameObject.Find("onion").GetComponent<SpriteRenderer>();
+        tomato = GameObject.Find("tomato").GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
@@ -46,42 +51,68 @@ public class RobotManager : MonoBehaviour
        
         if(Input.GetKey(KeyCode.Space))
         {
-            if (canGetFood)
+            if (canGetOnions)
             {
-                animator.SetBool("serving", true);
-                serving = true;
+                animator.SetBool("carrying_onion", true);
+                servingOnion = true;
             }
-            if(canCook)
+            if (canGetTomato)
             {
-                StartCoroutine(cutOnions());// cutOnions();
+                animator.SetBool("carrying_tomato", true);
+                servingTomato = true;
+            }
+            if(canCut && servingOnion)
+            {
+                StartCoroutine(cutOnions());
+            }
+            if (canCut && servingTomato)
+            {
+                StartCoroutine(cutTomato());
             }
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.name == "fridge")
-            canGetFood = true;
-        if (collision.name == "cooking_machines" && serving)
-            canCook = true;
+        if(collision.name == "onion_dispenser")
+            canGetOnions = true;
+        if (collision.name == "tomato_dispenser")
+            canGetTomato = true;
+        if (collision.name == "knife_table" && (servingOnion || servingTomato))
+            canCut = true;
         
     }
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.name == "fridge")
-            canGetFood = false;
-        if (collision.name == "cooking_machines")
-            canCook = false;
+        if (collision.name == "onion_dispenser")
+            canGetOnions = false;
+        if (collision.name == "tomato_dispenser")
+            canGetTomato = false;
+        if (collision.name == "knife_table")
+            canCut = false;
     }
     private IEnumerator cutOnions()
     {
         blockMovement = true;
-        animator.SetBool("serving", false);
+        animator.SetBool("carrying_onion", false);
+        servingOnion = false;
         //show onion
         onion.color = new Color(1f, 1f, 1f, 1f);
         yield return new WaitForSeconds(3);
         //hide onion
         onion.sprite = onion_cut;
+        blockMovement = false;
+    }
+    private IEnumerator cutTomato()
+    {
+        blockMovement = true;
+        animator.SetBool("carrying_tomato", false);
+        servingTomato = false;
+        //show onion
+        tomato.color = new Color(1f, 1f, 1f, 1f);
+        yield return new WaitForSeconds(3);
+        //hide onion
+        tomato.sprite = tomato_cut;
         blockMovement = false;
     }
 }
